@@ -9,7 +9,7 @@ First, download [Antlr v4](http://www.antlr.org/download.html) from the site. Th
 
 [Antlrworks2](tunnelvisionlabs.com/products/demo/antlrworks) is an IDE built specifically for .g4 files, but to test grammar files you have to load them up in a test rig, which slows development of the grammar.
 
-[IntelliJ Idea](https://www.jetbrains.com/idea/) (the community version) is a better solution. It can handle most languages, and with the Antlr4 plugin, it generates live syntax trees on text that you can enter in a sidebox, allowing for instant testing of grammars. In Idea, `File->Settings` and then `Plugins` gets you to a plugin list. Search for Antlr v4 (click 'search in repositories' if you don't see a result) and install it.
+[IntelliJ Idea](https://www.jetbrains.com/idea/) (the community version) is a better solution. It can handle most languages, and with the Antlr4 plugin, it generates live syntax trees on text that you can enter in a sidebox, allowing for instant testing of grammars. In Idea, `File->Settings` and then `Plugins` gets you to a plugin list. Search for Antlr v4 (click 'search in repositories' if you don't see a result) and install it. Once that's done, open the `filigree-text` folder.
 
 Now you can edit grammar files conveniently. However, we need to use the syntax trees the grammar generates, and while the default choice is Java, I'm going full Python. In a terminal, go to the folder containing the grammar files and run this command:
 
