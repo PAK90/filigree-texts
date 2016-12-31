@@ -22,6 +22,7 @@ textbox
 Every row either has one ability, or a list of them.
 */
 row
-    : ability
-    | ability_list
+    : /*ability
+    | ability_list*/
+    'test'
     ;
