@@ -6,7 +6,12 @@ __pycache__/
 # C extensions
 *.so
 
+# The antlr jar.
 *.jar
+
+# Some Idea files
+**/.idea/workspace.xml 
+**/.idea/tasks.xml
 
 # Distribution / packaging
 .Python
