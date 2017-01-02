@@ -9,10 +9,10 @@ First, download [Antlr v4](http://www.antlr.org/download.html) from the site. Th
 
 [Antlrworks2](tunnelvisionlabs.com/products/demo/antlrworks) is an IDE built specifically for .g4 files, but to test grammar files you have to load them up in a test rig, which slows development of the grammar.
 
-[IntelliJ Idea](https://www.jetbrains.com/idea/) (the community version) is a better solution. It can handle most languages, and with the Antlr4 plugin, it generates live syntax trees on text that you can enter in a sidebox, allowing for instant testing of grammars. In Idea, `File->Settings` and then `Plugins` gets you to a plugin list. Search for Antlr v4 (click 'search in repositories' if you don't see a result) and install it. Once that's done, open the `filigree-text` folder.
+[IntelliJ Idea](https://www.jetbrains.com/idea/) (the community version) is a better solution. It can handle most languages, and with the Antlr4 plugin, it generates live syntax trees on text that you can enter in a sidebox, allowing for instant testing of grammars. In Idea, `File->Settings` and then `Plugins` gets you to a plugin list. Search for Antlr v4 (click 'search in repositories' if you don't see a result) and install it. Once that's done, open the `filigree-text` folder. Then to test the syntax, open the mtg.g4 file and right click on the `evaluate` rule, and select `Test Rule evaluate`. Then use the input text box to test the grammar, or select a file.
 
 Now you can edit grammar files conveniently. However, we need to use the syntax trees the grammar generates, and while the default choice is Java, I'm going full Python. In a terminal, go to the folder containing the grammar files and run this command:
 
-`java -cp antlr-4.6-complete.jar org.antlr.v4.Tool MagicTextBox.g4 -Dlanguage=Python3`
+`java -cp antlr-4.6-complete.jar org.antlr.v4.Tool mtg.g4 -Dlanguage=Python3`
 
-where MagicTextBox.g4 will be the name of the top-level grammar file (it imports other ones). (You can leave out the `-Dlanguage=Python3` option to generate default Java classes.) This generates Python classes (a lexer, a listener and a parser) which will be used in a future Python file which will read in a (future) corpus file and pass each card into the syntax tree generator.
+where mtg.g4 will be the name of the top-level grammar file (it imports other ones). (You can leave out the `-Dlanguage=Python3` option to generate default Java classes.) This generates Python classes (a lexer, a listener and a parser) which will be used in a future Python file which will read in a (future) corpus file and pass each card into the syntax tree generator.
