@@ -12,6 +12,7 @@ __pycache__/
 # Some Idea files
 **/.idea/workspace.xml 
 **/.idea/tasks.xml
+*.pdf
 
 # Distribution / packaging
 .Python
