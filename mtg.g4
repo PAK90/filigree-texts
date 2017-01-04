@@ -1,10 +1,10 @@
 grammar mtg;
 
 // Take care of whitespace.
-WS  :  [ \r\t]+ -> skip;
+WS  :  [  \r\t]+ -> skip;
 
 STRING
-    : '"' [a-z]+ '"'
+    : '"' [a-z ]+ '"'
     ;
 
 NUMBER
@@ -75,7 +75,40 @@ the ability is put on the stack the next time a player would receive priority an
 it resolves, or it otherwise leaves the stack. See rule 603, “Handling Triggered Abilities.”
 */
 triggered_ability
-    : TRIGGER_WORDS trigger_or_event ',' effect // Add compatibility with 'or' (e.g. Shrine of Limitless Power).
+    : trigger_words ',' STRING // Add compatibility with 'or' (e.g. Shrine of Limitless Power).
+    ;
+
+trigger_words
+    : 'when'|'whenever' whenever_triggers|'at' at_triggers
+    ;
+
+whenever_triggers
+    : triggerer action
+    ;
+
+/*
+Who's doing the triggering.
+*/
+triggerer
+    : SELF
+    | ((quantity|'another'|'a'|'an'|'that') qualifier? (TYPES|SUBTYPES|player_opponent))
+    |
+    ;
+
+quantity
+    : ('one'|'two') 'or more'? // this also has the space problem...
+    ;
+
+qualifier
+    : COLOURS (('or'|'and')* qualifier )* // for some reason this needs a space? ' or' instead of 'or'. but 'and' works...
+    ;
+
+action
+    : 'dies'
+    ;
+
+SELF
+    : '~'
     ;
 
 /*
@@ -83,12 +116,37 @@ At varieties:
 "at the beginning of your|each|each player's|that player's|the|each opponent's upkeep|draw step|end step|precombat main phase,"
 "at the beginning of combat on your|each opponent's turn,"
 "at end of combat,"
-
-
+Note that this will accept invalid combinations, it's not an ultra-strict grammar checker.
 */
-TRIGGER_WORDS
-    : 'when'|'whenever'|'at'
+at_triggers
+    : ('the beginning of' (combat|not_combat))
+    |'end of combat'
     ;
+
+not_combat
+    : (ownership|'the') PHASES
+    ;
+
+combat
+    : 'combat on' ownership 'turn'
+    ;
+
+ownership
+    : SELECTIVES (player_opponent'\'s'?)? // this last one needed to be a parser rule, failed on lexer rule... dunno why.
+    ;
+
+PHASES
+    : 'draw step'|'upkeep'|'precombat main phase'|'postcombat main phase'|'combat'|'end step'
+    ;
+
+SELECTIVES
+    : 'your'|'each'|'that'
+    ;
+
+player_opponent
+    : 'player'|'opponent'
+    ;
+
 /*
 112.3d Static abilities are written as statements. They’re simply true. Static abilities create continuous effects
 which are active while the permanent with the ability is on the battlefield and has the ability, or while the object
@@ -172,8 +230,8 @@ COLOURS
     ;
 
 TYPES
-    : 'creature'
-    | 'instant'
+    : 'instant'
+    | 'creature'
     ;
 
 /*
