@@ -1,30 +1,41 @@
 grammar mtg;
 
 // Take care of whitespace.
-WS  :  [  \r\t]+ -> skip;
+WS : [ \r\t\f\n]+ -> skip;
+
+OTHER: . -> skip;
 
 STRING
-    : '"' [a-z ]+ '"'
+    : '"' [A-z ]+ '"'
     ;
 
 NUMBER
     : [0-9]+
     ;
 
+COLOURS_SHORT
+    : 'W' | 'w'
+    | 'U' | 'u'
+    | 'R' | 'r'
+    | 'B' | 'b'
+    | 'G' | 'g'
+    | 'C' | 'c'
+    ;
+
 /*
-Mana costs can be simply {3}, or {r}, or {2/r}.
+Mana costs can be simply {3}, or {r}, or {2/r}, or {3}{G/P}.
 Multiples are handled by the mana_cost rule.
 Need / to handle hybrid costs, and 2 for two-brid costs.
 */
 MANA_COST
-    : '{' (NUMBER|[a-z/2]+) '}'
+    : '{' (NUMBER|COLOURS_SHORT|('2' '/' COLOURS_SHORT)|(COLOURS_SHORT '/' ('P'|'p'))) '}'
     ;
 
 /*
 This will be the entry point of our parser.
 */
 evaluate
-	: textbox?
+	: textbox? // could be an empty textbox.
 	;
 
 /*
@@ -47,7 +58,7 @@ row
 An ability list is strictly evergreen keywords, comma-separated.
 */
 ability_list
-    : evergreen_static_keyword (',' evergreen_static_keyword)*
+    : static_ability (',' static_ability)* // only static abilities get listed in one line with commas.
     ;
 
 ability
@@ -83,15 +94,20 @@ trigger_words
     ;
 
 whenever_triggers
-    : triggerer action
+    : triggerer (' or' triggerer)? action
     ;
 
 /*
 Who's doing the triggering.
 */
+
+qualifier
+    : COLOURS (('and'|'or')* qualifier)* // for some reason this needs a space? ' or' instead of 'or'. but 'and' works...
+    ;
+
 triggerer
-    : SELF
-    | ((quantity|'another'|'a'|'an'|'that') qualifier? (TYPES|SUBTYPES|player_opponent))
+    : self
+    | ((quantity|'another'|'a'|'an'|'that') qualifier? (CREATURE_TYPE|TYPES|SUBTYPES|player_opponent))
     |
     ;
 
@@ -99,15 +115,12 @@ quantity
     : ('one'|'two') 'or more'? // this also has the space problem...
     ;
 
-qualifier
-    : COLOURS (('or'|'and')* qualifier )* // for some reason this needs a space? ' or' instead of 'or'. but 'and' works...
-    ;
-
 action
     : 'dies'
+    | 'enters the battlefield'
     ;
 
-SELF
+self // difference between this being a parser (nocaps) and lexer (CAPS) rule is whether it appears in the tree.
     : '~'
     ;
 
@@ -253,7 +266,7 @@ quality
     | 'monocolored'
     | 'multicolored'
     | 'snow'
-    | 'converted mana cost ' NUMBER ' or greater'
+    | 'converted mana cost' NUMBER 'or greater'
     | 'chosen card'
     | 'everything'
     | 'lands'
