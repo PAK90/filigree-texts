@@ -9,8 +9,12 @@ STRING
     : '"' [A-z ]+ '"'
     ;
 
+AND_OR
+    : 'and' | 'or'
+    ;
+
 NUMBER
-    : [0-9]+
+    : [1-9][0-9]* /* don't allow flat {0}. */
     ;
 
 COLOURS_SHORT
@@ -28,7 +32,7 @@ Multiples are handled by the mana_cost rule.
 Need / to handle hybrid costs, and 2 for two-brid costs.
 */
 MANA_COST
-    : '{' (NUMBER|COLOURS_SHORT|('2' '/' COLOURS_SHORT)|(COLOURS_SHORT '/' ('P'|'p'))) '}'
+    : '{' ( NUMBER | COLOURS_SHORT | ('2' '/' COLOURS_SHORT) | (COLOURS_SHORT '/' ('P'|'p')) ) '}'
     ;
 
 /*
@@ -76,9 +80,14 @@ where it remains until it’s countered, it resolves, or it otherwise leaves the
 See rule 602, “Activating Activated Abilities.”
 */
 activated_ability
-    : mana_cost ':' STRING
+    : activation_cost (',' activation_cost)* ':' STRING //(one_time_effect duration)+
     ;
 
+activation_cost
+    : mana_cost
+    | '{T}' | '{t}'
+    | '{Q}' | '{q}'
+    ;
 /*
 112.3c Triggered abilities have a trigger condition and an effect. They are written as “[Trigger condition], [effect],”
 and include (and usually begin with) the word “when,” “whenever,” or “at.” Whenever the trigger event occurs,
@@ -90,11 +99,11 @@ triggered_ability
     ;
 
 trigger_words
-    : 'when'|'whenever' whenever_triggers|'at' at_triggers
+    : ('when'|'whenever'|'as') whenever_triggers|'at' at_triggers
     ;
 
 whenever_triggers
-    : triggerer (' or' triggerer)? action
+    : triggerer (('or'|'and') triggerer)* action
     ;
 
 /*
@@ -102,7 +111,7 @@ Who's doing the triggering.
 */
 
 qualifier
-    : COLOURS (('and'|'or')* qualifier)* // for some reason this needs a space? ' or' instead of 'or'. but 'and' works...
+    : COLOURS (('and'|' or')* qualifier)* // for some reason this needs a space? ' or' instead of 'or'. but 'and' works...
     ;
 
 triggerer
@@ -170,7 +179,6 @@ static_ability
 	| /* FINISH ME */
 	;
 
-
 mana_cost
     : MANA_COST+
     ;
@@ -185,7 +193,7 @@ evergreen_static_keyword
 	: 'deathtouch'
 	| 'defender'
 	| 'double strike'
-	| 'enchant' object_or_player (',' ' or'? object_or_player)* // Supports multiple targets like what's done in 'Imprisoned in the Moon'.
+	| 'enchant' object_or_player (',' 'or'? object_or_player)* // Supports multiple targets like what's done in 'Imprisoned in the Moon'.
 	| 'first strike'
 	| 'flash'
 	| 'flying'
@@ -262,7 +270,7 @@ quality
     | 'its colors' // Expand or no?
     | 'sorceries'
     | 'chosen type'
-    | 'Arcane'
+    | 'arcane'
     | 'monocolored'
     | 'multicolored'
     | 'snow'
