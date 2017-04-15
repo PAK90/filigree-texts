@@ -9,8 +9,11 @@ STRING
     : '"' [A-z ]+ '"'
     ;
 
-AND_OR
-    : 'and' | 'or'
+AND: 'and';
+OR: 'or';
+
+and_or
+    : AND | OR
     ;
 
 NUMBER
@@ -103,7 +106,7 @@ trigger_words
     ;
 
 whenever_triggers
-    : triggerer (('or'|'and') triggerer)* action
+    : triggerer (and_or triggerer)* action
     ;
 
 /*
@@ -111,13 +114,23 @@ Who's doing the triggering.
 */
 
 qualifier
-    : COLOURS (('and'|' or')* qualifier)* // for some reason this needs a space? ' or' instead of 'or'. but 'and' works...
+    : COLOURS (and_or qualifier)* // for some reason this needs a space? ' or' instead of 'or'. but 'and' works...
     ;
 
 triggerer
     : self
-    | ((quantity|'another'|'a'|'an'|'that') qualifier? (CREATURE_TYPE|TYPES|SUBTYPES|player_opponent))
+    | ((quantity|'another'|'a'|'an'|'that') qualifier? (CREATURE_TYPE|TYPES|SUBTYPES|player_opponent) controller?)
     |
+    ;
+
+controller
+    : 'you' CONTROL
+    | 'opponent' CONTROL
+    ;
+
+CONTROL
+    : 'control'
+    | 'controls'
     ;
 
 quantity
@@ -219,10 +232,15 @@ object_or_player
 	: ENCHANT_TYPES | 'player'
     ;
 
+TYPES
+    : 'instant'
+    | 'creature'
+    ;
+
 ENCHANT_TYPES
-    : 'creature'
+    : 'creature'/*
     | 'creature an opponent controls'
-    | 'creature you control'
+    | 'creature you control'*/
     | 'opponent' // should probably be a type of 'player'
     | TYPES ' card in a graveyard'
     | 'enchantment'
@@ -250,10 +268,6 @@ COLOURS
     | 'white'
     ;
 
-TYPES
-    : 'instant'
-    | 'creature'
-    ;
 
 /*
 Reference table: http://mtgsalvation.gamepedia.com/Protection#History
