@@ -1,41 +1,16 @@
 grammar mtg;
+import mtgtokens;
 
-// Take care of whitespace.
-WS : [ \r\t\f\n]+ -> skip;
+tap_untap: TAP | UNTAP;
+and_or: AND | OR;
+player_opponent : PLAYER | OPPONENT;
 
-OTHER: . -> skip;
-
-STRING
-    : '"' [A-z ]+ '"'
+self // difference between this being a parser (nocaps) and lexer (CAPS) rule is whether it appears in the tree.
+    : TILDE
     ;
 
-AND: 'and';
-OR: 'or';
-
-and_or
-    : AND | OR
-    ;
-
-NUMBER
-    : [1-9][0-9]* /* don't allow flat {0}. */
-    ;
-
-COLOURS_SHORT
-    : 'W' | 'w'
-    | 'U' | 'u'
-    | 'R' | 'r'
-    | 'B' | 'b'
-    | 'G' | 'g'
-    | 'C' | 'c'
-    ;
-
-/*
-Mana costs can be simply {3}, or {r}, or {2/r}, or {3}{G/P}.
-Multiples are handled by the mana_cost rule.
-Need / to handle hybrid costs, and 2 for two-brid costs.
-*/
-MANA_COST
-    : '{' ( NUMBER | COLOURS_SHORT | ('2' '/' COLOURS_SHORT) | (COLOURS_SHORT '/' ('P'|'p')) ) '}'
+phases
+    : DRAW STEP | UPKEEP | PRECOMBAT MAIN PHASE | POSTCOMBAT MAIN PHASE | COMBAT | END STEP
     ;
 
 /*
@@ -65,7 +40,7 @@ row
 An ability list is strictly evergreen keywords, comma-separated.
 */
 ability_list
-    : static_ability (',' static_ability)* // only static abilities get listed in one line with commas.
+    : static_ability (COMMA static_ability)* // only static abilities get listed in one line with commas.
     ;
 
 ability
@@ -83,13 +58,12 @@ where it remains until it’s countered, it resolves, or it otherwise leaves the
 See rule 602, “Activating Activated Abilities.”
 */
 activated_ability
-    : activation_cost (',' activation_cost)* ':' STRING //(one_time_effect duration)+
+    : activation_cost (COMMA activation_cost)* COLON STRING //(one_time_effect duration)+
     ;
 
 activation_cost
     : mana_cost
-    | '{T}' | '{t}'
-    | '{Q}' | '{q}'
+    | tap_untap
     ;
 /*
 112.3c Triggered abilities have a trigger condition and an effect. They are written as “[Trigger condition], [effect],”
@@ -98,11 +72,12 @@ the ability is put on the stack the next time a player would receive priority an
 it resolves, or it otherwise leaves the stack. See rule 603, “Handling Triggered Abilities.”
 */
 triggered_ability
-    : trigger_words ',' STRING // Add compatibility with 'or' (e.g. Shrine of Limitless Power).
+    : trigger_words (OR trigger_words)? COMMA STRING // Add compatibility with 'or' (e.g. Shrine of Limitless Power).
     ;
 
 trigger_words
-    : ('when'|'whenever'|'as') whenever_triggers|'at' at_triggers
+    : (WHEN|WHENEVER|AS) whenever_triggers
+    | AT at_triggers
     ;
 
 whenever_triggers
@@ -114,12 +89,12 @@ Who's doing the triggering.
 */
 
 qualifier
-    : COLOURS (and_or qualifier)* // for some reason this needs a space? ' or' instead of 'or'. but 'and' works...
+    : COLOURS_LONG (and_or qualifier)* // for some reason this needs a space? ' or' instead of 'or'. but 'and' works...
     ;
 
 triggerer
     : self
-    | ((quantity|'another'|'a'|'an'|'that') qualifier? (CREATURE_TYPE|TYPES|SUBTYPES|player_opponent) controller?)
+    | ((quantity|ANOTHER|A|AN|THAT) qualifier? (CREATURE_TYPE|TYPES|SUBTYPES|player_opponent) controller?)
     |
     ;
 
@@ -134,7 +109,7 @@ CONTROL
     ;
 
 quantity
-    : ('one'|'two') 'or more'? // this also has the space problem...
+    : WORD_NUMBER (OR WMORE)?
     ;
 
 action
@@ -142,9 +117,6 @@ action
     | 'enters the battlefield'
     ;
 
-self // difference between this being a parser (nocaps) and lexer (CAPS) rule is whether it appears in the tree.
-    : '~'
-    ;
 
 /*
 At varieties:
@@ -154,12 +126,12 @@ At varieties:
 Note that this will accept invalid combinations, it's not an ultra-strict grammar checker.
 */
 at_triggers
-    : ('the beginning of' (combat|not_combat))
-    |'end of combat'
+    : THE BEGINNING OF (combat|not_combat)
+    | END OF COMBAT
     ;
 
 not_combat
-    : (ownership|'the') PHASES
+    : (ownership|'the') phases
     ;
 
 combat
@@ -168,18 +140,6 @@ combat
 
 ownership
     : SELECTIVES (player_opponent'\'s'?)? // this last one needed to be a parser rule, failed on lexer rule... dunno why.
-    ;
-
-PHASES
-    : 'draw step'|'upkeep'|'precombat main phase'|'postcombat main phase'|'combat'|'end step'
-    ;
-
-SELECTIVES
-    : 'your'|'each'|'that'
-    ;
-
-player_opponent
-    : 'player'|'opponent'
     ;
 
 /*
@@ -260,20 +220,12 @@ protection
     : 'protection from' quality ('and from' quality)*
     ;
 
-COLOURS
-    : 'black'
-    | 'blue'
-    | 'green'
-    | 'red'
-    | 'white'
-    ;
-
 
 /*
 Reference table: http://mtgsalvation.gamepedia.com/Protection#History
 */
 quality
-    : COLOURS
+    : COLOURS_LONG
     | 'artifacts'
     | 'chosen color' // All 'choose' ones will probably change with implementation of 'choose' syntax.
     | CREATURE_TYPE
@@ -294,9 +246,4 @@ quality
     | 'lands'
     | 'colored spells'
     | 'chosen player'
-    ;
-
-CREATURE_TYPE
-    : 'eldrazi'
-    | 'wizard'
     ;
